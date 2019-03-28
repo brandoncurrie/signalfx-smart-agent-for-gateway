@@ -1,0 +1,19 @@
+hostname: ${SFX_SERVER_NAME}
+signalFxAccessToken: ${SFX_ACCESS_TOKEN}
+
+monitors:
+  - type: host-metadata
+  - type: collectd/cpu
+  - type: collectd/cpu
+  - type: collectd/cpufreq
+  - type: collectd/df
+  - type: collectd/disk
+  - type: collectd/interface
+  - type: collectd/load
+  - type: collectd/memory
+  - type: collectd/vmem
+  - type: collectd/signalfx-metadata
+    extraDimensions:
+      source: gateway
+      cluster: ${SFX_GATEWAY_CLUSTERNAME}
+
