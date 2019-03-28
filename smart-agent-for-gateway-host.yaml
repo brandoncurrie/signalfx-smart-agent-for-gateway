@@ -1,6 +1,25 @@
 hostname: ${SFX_SERVER_NAME}
 signalFxAccessToken: ${SFX_ACCESS_TOKEN}
 
+etcPath: /hostfs/etc
+procPath: /hostfs/proc
+runPath: /hostfs/run
+varPath: /hostfs/var
+sysPath: /hostfs/sys
+
+observers:
+  - type: docker
+    # ECS tasks running the awsvpc network mode don't actually expose an IP
+    # address on the docker inspect API so we need to use the hostname instead.
+    useHostnameIfPresent: true
+    labelsToDimensions: &labelMap
+      # We map the cluster label to ClusterName to match what our AWS
+      # CloudWatch integration uses.
+      com.amazonaws.ecs.cluster: ClusterName
+      com.amazonaws.ecs.container-name: container_spec_name
+      com.amazonaws.ecs.task-arn: ecs_task_arn
+      com.amazonaws.ecs.task-definition-family: ecs_task_group
+      com.amazonaws.ecs.task-definition-version: ecs_task_version    
 monitors:
   - type: host-metadata
   - type: collectd/cpu
@@ -16,4 +35,7 @@ monitors:
     extraDimensions:
       source: gateway
       cluster: ${SFX_GATEWAY_CLUSTERNAME}
+  - type: docker-container-stats
+    labelsToDimensions:
+      <<: *labelMap
 
