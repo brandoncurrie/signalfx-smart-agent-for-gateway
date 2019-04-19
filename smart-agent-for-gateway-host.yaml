@@ -8,7 +8,7 @@ varPath: /hostfs/var
 sysPath: /hostfs/sys
 
 globalDimensions:
-  - cluster: ${SFX_GATEWAY_CLUSTERNAME}
+  cluster: ${SFX_GATEWAY_CLUSTERNAME}
 observers:
   - type: host
   - type: docker

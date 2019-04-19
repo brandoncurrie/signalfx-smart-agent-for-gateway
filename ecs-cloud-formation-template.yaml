@@ -1,0 +1,90 @@
+---
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Environment name that joins all the stacks
+
+  SmartAgentImage:
+    Type: String
+    Description: Smart Agent image
+    Default: "quay.io/signalfx/signalfx-agent:4.3.0"
+
+  SignalfxAccessToken:
+    Type: String
+    Description: Access token for authenticating with SignalFx
+    Default: ""
+
+  SmartAgentConfigUrl:
+    Type: String
+    Description: Path to the Smart Agent config
+    # Default: "https://raw.githubusercontent.com/signalfx/signalfx-agent/master/deployments/ecs/agent.yaml"
+    Default: "https://raw.githubusercontent.com/achandras/smart_agent_config/master/agent.yaml"
+
+Resources:
+
+  ### signalfx smart agent
+  SmartAgentTaskDefinition:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties:
+      Family: "signalfx-agent-task"
+      NetworkMode: "host"
+      RequiresCompatibilities:
+        - "EC2"
+      Volumes:
+        - Name: hostfs
+          Host:
+            SourcePath: "/"
+        - Name: docker-socket
+          Host:
+            SourcePath: "/var/run/docker.sock"
+      ContainerDefinitions:
+        - Name: "agent"
+          Image: { Ref: SmartAgentImage }
+          Essential: true
+          Memory: 200
+          PortMappings:
+            - ContainerPort: 9080
+              HostPort: 9080
+              Protocol: "tcp"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group:
+                'Fn::ImportValue': !Sub "${EnvironmentName}:ECSServiceLogGroup"
+              awslogs-region: { Ref: "AWS::Region" }
+              awslogs-stream-prefix: "agent"
+          Environment:
+            - Name: ACCESS_TOKEN
+              Value: { Ref: SignalfxAccessToken }
+            - Name: INGEST_URL
+              Value: "http://gateway.ecommerce.svc.cluster.local:8080"
+            - Name: CONFIG_URL
+              Value: { Ref: SmartAgentConfigUrl }
+          MountPoints:
+            - SourceVolume: "hostfs"
+              ContainerPath: "/hostfs"
+              ReadOnly: true
+            - SourceVolume: "docker-socket"
+              ContainerPath: "/var/run/docker.sock"
+              ReadOnly: true
+          DockerLabels:
+            "app": "signalfx-agent"
+          EntryPoint:
+            - "bash"
+            - "-c"
+          Command:
+            - "curl --fail $CONFIG_URL > /etc/signalfx/agent.yaml && cat /etc/signalfx/agent.yaml && exec /bin/signalfx-agent"
+
+  SmartAgentService:
+    Type: 'AWS::ECS::Service'
+    Properties:
+      Cluster:
+        'Fn::ImportValue': !Sub "${EnvironmentName}:ECSCluster"
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      SchedulingStrategy: DAEMON
+      LaunchType: EC2
+      TaskDefinition: { Ref: SmartAgentTaskDefinition }
+
+
