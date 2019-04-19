@@ -7,6 +7,8 @@ runPath: /hostfs/run
 varPath: /hostfs/var
 sysPath: /hostfs/sys
 
+globalDimensions:
+  - cluster: ${SFX_GATEWAY_CLUSTERNAME}
 observers:
   - type: host
   - type: docker
@@ -24,7 +26,6 @@ observers:
 monitors:
   - type: host-metadata
   - type: collectd/cpu
-  - type: collectd/cpu
   - type: collectd/cpufreq
   - type: collectd/df
   - type: collectd/disk
@@ -40,3 +41,6 @@ monitors:
     labelsToDimensions:
       <<: *labelMap
 
+metricsToExclude:
+  - {"#from": "/lib/whitelist.json", flatten: true}
+  - {"#from": "env:METRICS_TO_EXCLUDE", default: [], flatten: true}
