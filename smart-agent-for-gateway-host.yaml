@@ -12,7 +12,7 @@ observers:
   - type: docker
     # ECS tasks running the 'awsvpc' network mode don't actually expose an IP
     # address on the docker inspect API so we need to use the hostname instead.
-    # useHostnameIfPresent: true
+    useHostnameIfPresent: true
     labelsToDimensions: &labelMap
       # We map the cluster label to ClusterName to match what our AWS
       # CloudWatch integration uses.
