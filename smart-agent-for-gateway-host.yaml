@@ -1,4 +1,4 @@
-hostname: ${SFX_SERVER_NAME}
+#hostname: ${SFX_SERVER_NAME}
 signalFxAccessToken: ${SFX_ACCESS_TOKEN}
 
 etcPath: /hostfs/etc
